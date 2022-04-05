@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "express": "^4.17.3",
+    "socket.io": "^4.4.1",
+    "ws": "^8.5.0"
+  },
+  "main": "App.js"
+}
