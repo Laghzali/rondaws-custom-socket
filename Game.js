@@ -11,7 +11,7 @@ class Table {
   }
 
   //initilize table and assing cards to players , construct the deck and distrubite cards
-  get init() {
+  init() {
     console.log('initiating game')
 
     //shuffle function
@@ -54,6 +54,7 @@ class Table {
 
   //return players on the table
   get Players() {
+
     return this.CurrentPlayers.map(p => {
       return { pid: p.PlayerID, phand: p.getHand }
     })
