@@ -86,6 +86,7 @@ io.on('connection', (socket) => {
         OnlineGames.forEach(game => {
             if (game.id == data.room) {
                 if (game.game.Finished) {
+                    console.log('GAME FINISHED')
                     io.to(game.id).emit('GAME_FINISHED', game.game.CurrentScore)
                     return
                 }
