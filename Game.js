@@ -5,7 +5,11 @@ class Table {
   CurrentPlayers = []
   LastThrower;
   LastCard;
-  Turn = 0;
+  Turn = 0
+  deck = []
+  SliceStart = 0
+  SliceEnd = 4
+  Finished = false
   constructor(Players) {
     this.maxPlayers = Players;
   }
@@ -26,17 +30,16 @@ class Table {
     //Construct the deck with 40 cards with different types
     const CTypes = ['A', 'B', 'C', 'D']
     const CNumbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12]
-    const deck = []
+
     CNumbers.forEach((NUM) => {
       CTypes.flatMap(TYPE => {
 
-        deck.push({ number: NUM, type: TYPE })
+        this.deck.push({ number: NUM, type: TYPE })
       })
     })
     //shuffle deck (deck[] array)
-    shuffle(deck)
-    var SliceStart = 0
-    var SliceEnd = 4
+    shuffle(this.deck)
+
 
     //Create players on table and distriute 3 cards to each player
 
@@ -44,9 +47,9 @@ class Table {
       this.CurrentScore.push({ p: 1, score: 0 })
       let player = new Player(x)
       this.CurrentPlayers.push(player)
-      player.setHand = deck.slice(SliceStart, SliceEnd)
-      SliceEnd += 4
-      SliceStart += 4
+      player.setHand = this.deck.slice(this.SliceStart, this.SliceEnd)
+      this.SliceEnd += 4
+      this.SliceStart += 4
     }
 
   }
@@ -80,9 +83,13 @@ class Table {
   }
   //Throw card to the table
   set Throw(ThrownCard) {
+    if (this.deck.length < 1) {
+      this.Finished = true
+    }
     let pscore = 0
 
     if (this.Turn != this.LastThrower) {
+      console.log('not your turn')
       console.log('Player : ' + this.Turn + 'TURN')
       return
     }
@@ -90,6 +97,12 @@ class Table {
     this.CurrentPlayers.forEach(player => {
       if (player.PlayerID == this.LastThrower) {
         player.removeCard = ThrownCard
+      }
+      if (player.shouldDistribute()) {
+        console.log('distribute')
+        player.setHand = this.deck.slice(this.SliceStart, this.SliceEnd)
+        this.SliceEnd += 4
+        this.SliceStart += 4
       }
     })
     ////CHECK IF CurrentTable.card.number is equal to throwencard.number (check if makla)
@@ -151,6 +164,8 @@ class Table {
       }
     })
     this.Turn += 1
+    if (this.Turn >= this.maxPlayers)
+      this.Turn = 0
     pscore = 0
   }
 }
@@ -162,13 +177,17 @@ class Player {
   constructor(ID) {
     this.PlayerID = ID;
   }
+  shouldDistribute() {
+    if (this.PlayerHand.length == 0) {
+      return true
+    }
+    return false
+  }
   set removeCard(cardToremove) {
     this.PlayerHand.forEach((mycard, index) => {
 
       if (JSON.stringify(mycard) === JSON.stringify(cardToremove)) {
-        console.log(this.PlayerHand.splice(index, 1))
-
-
+        this.PlayerHand.splice(index, 1)
       }
     })
   }

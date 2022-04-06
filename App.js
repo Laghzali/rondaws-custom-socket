@@ -63,20 +63,43 @@ io.on('connection', (socket) => {
                 const game = new Ronda(msg.maxplayers)
                 const CurrentTable = game.CurrentTable;
                 const CurrentPlayers = game.CurrentPlayers
+
                 const CurrentScore = game.CurrentScore
                 const CurrrentTurn = game.Turn
                 game.init()
-
+                //msg.id = room id
                 const clients = Array.from(io.sockets.adapter.rooms.get(msg.id))
                 for (let x = 0; x < clients.length; x++) {
-                    console.log(CurrentPlayers[x])
-                    console.log(clients)
+                    console.log(CurrentPlayers[x].PlayerID)
                     io.to(clients[x]).emit('GAME_RECEIVE_HAND', CurrentPlayers[x])
+                    io.to(clients[x]).emit('PLAYER_ID', CurrentPlayers[x].PlayerID)
                 }
+                io.in(msg.id).emit('GAME_CURRENT_TABLE', CurrentTable)
+                io.in(msg.id).emit('GAME_START', true)
                 OnlineGames.push({ id: msg.id, game: game })
             }
 
         }
+    })
+
+    socket.on('GAME_THROW', data => {
+        OnlineGames.forEach(game => {
+            if (game.id == data.room) {
+                if (game.game.Finished) {
+                    io.to(game.id).emit('GAME_FINISHED', game.game.CurrentScore)
+                    return
+                }
+                game.game.LastThrower = data.pid
+                game.game.Throw = { number: data.number, type: data.type }
+
+                const clients = Array.from(io.sockets.adapter.rooms.get(data.room))
+                for (let x = 0; x < clients.length; x++) {
+
+                    io.to(clients[x]).emit('GAME_RECEIVE_HAND', game.game.CurrentPlayers[x])
+                }
+                io.in(data.room).emit('GAME_CURRENT_TABLE', game.game.CurrentTable)
+            }
+        })
     })
 });
 
