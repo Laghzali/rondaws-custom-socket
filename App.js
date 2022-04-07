@@ -1,6 +1,3 @@
-const { on } = require('events');
-const req = require('express/lib/request');
-const { copyFileSync } = require('fs');
 
 const http = require('http').createServer();
 const Ronda = require('./Game').Ronda
@@ -57,6 +54,8 @@ io.on('connection', (socket) => {
     })
 
     socket.on('GAME_INIT', msg => {
+        console.log('msg : ')
+        console.log(msg)
         if (msg.status == 'start') {
             console.log('players : ' + msg.maxplayers)
             if (msg.maxplayers > 1) {
@@ -67,7 +66,7 @@ io.on('connection', (socket) => {
                 const CurrentScore = game.CurrentScore
                 const CurrrentTurn = game.Turn
                 game.init()
-                //msg.id = room id
+                //msg.id is room id
                 const clients = Array.from(io.sockets.adapter.rooms.get(msg.id))
                 for (let x = 0; x < clients.length; x++) {
                     console.log(CurrentPlayers[x].PlayerID)
@@ -75,6 +74,8 @@ io.on('connection', (socket) => {
                     io.to(clients[x]).emit('PLAYER_ID', CurrentPlayers[x].PlayerID)
                 }
                 io.in(msg.id).emit('GAME_CURRENT_TABLE', CurrentTable)
+                io.in(msg.id).emit('GAME_RECEIVE_SCORE', CurrentScore)
+                io.in(msg.id).emit('PLAYER_TURN', CurrrentTurn)
                 io.in(msg.id).emit('GAME_START', true)
                 OnlineGames.push({ id: msg.id, game: game })
             }
@@ -83,22 +84,36 @@ io.on('connection', (socket) => {
     })
 
     socket.on('GAME_THROW', data => {
+        console.log('throoow')
+        console.log(data)
         OnlineGames.forEach(game => {
+            //game.id is the game room id
             if (game.id == data.room) {
+                //check if player turn
+                console.log('player id :' + data.pid)
+                console.log('turn  :' + game.game.Turn)
+                if (game.game.Turn != data.pid)
+                    return
                 if (game.game.Finished) {
                     console.log('GAME FINISHED')
-                    io.to(game.id).emit('GAME_FINISHED', game.game.CurrentScore)
+                    io.in(data.room).emit('GAME_FINISHED', game.Round)
                     return
-                }
-                game.game.LastThrower = data.pid
+                }//data.pid is player id (thrower)
+                game.game.Thrower = data.pid
+
                 game.game.Throw = { number: data.number, type: data.type }
+
 
                 const clients = Array.from(io.sockets.adapter.rooms.get(data.room))
                 for (let x = 0; x < clients.length; x++) {
-
+                    console.log('playerrrss ')
                     io.to(clients[x]).emit('GAME_RECEIVE_HAND', game.game.CurrentPlayers[x])
+                    console.log(game.game.CurrentPlayers[x])
                 }
+                io.in(data.room).emit('GAME_RECEIVE_SCORE', game.game.CurrentScore)
                 io.in(data.room).emit('GAME_CURRENT_TABLE', game.game.CurrentTable)
+                io.in(data.room).emit('PLAYER_TURN', game.game.Turn)
+
             }
         })
     })

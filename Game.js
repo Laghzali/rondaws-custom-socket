@@ -1,5 +1,9 @@
 
 class Table {
+  debugscore = 0
+  toremove = []
+  Thrownum = 0
+  Round = 1
   CurrentTable = [];
   CurrentScore = []
   CurrentPlayers = []
@@ -42,18 +46,14 @@ class Table {
     //shuffle deck (deck[] array)
     shuffle(this.deck)
 
-
     //Create players on table and distriute 3 cards to each player
 
     for (var x = 0; x < this.maxPlayers; x++) {
-      this.CurrentScore.push({ p: x, score: 0 })
+      this.CurrentScore.push({ p: x, score: 0, bont: 0 })
       let player = new Player(x)
       this.CurrentPlayers.push(player)
       player.setHand = this.deck.slice(this.SliceStart, this.SliceEnd)
-
-      this.SliceEnd += 4
-      this.SliceStart += 4
-
+      this.deck.splice(this.SliceStart, this.SliceEnd)
     }
 
   }
@@ -73,24 +73,32 @@ class Table {
     this.LastThrower = ID;
   }
 
-  CheckNext(card, table) {
-    let score = 0
-    table.forEach((cardInTable, index) => {
+  CheckNext(card) {
+
+    this.CurrentTable.forEach((cardInTable, index) => {
       if (card == cardInTable.number) {
         console.log('found' + card)
-        score += 1
+
+        this.CurrentScore.filter(score => {
+          if (score.p === this.LastThrower)
+            score.score += 1
+        })
+
         this.CurrentTable.splice(index, 1)
-        if (cardInTable.number === 7) {
-          this.CheckNext(card + 3, table)
+
+        if (cardInTable.number == 7) {
+          this.CheckNext(card + 3)
+        } else {
+          this.CheckNext(card + 1)
         }
-        this.CheckNext(card + 1, table)
       }
     })
-    return score
   }
+
   //Throw card to the table
   set Throw(ThrownCard) {
-    let pscore = 0
+    this.Thrownum += 1
+    console.log('THROW NO : ' + this.Thrownum)
 
     if (this.Turn != this.LastThrower) {
       console.log('not your turn')
@@ -112,35 +120,40 @@ class Table {
       if (cardExist) {
         //SET THIS PLAYER AS THE LAST EATER
         this.LastEater = this.LastThrower
-        //check if BONT score +2
+
+        this.CurrentScore.filter(score => {
+          if (score.p === this.LastThrower) {
+            console.log('addinf inw')
+            score.score += 2
+          }
+        })
+
+        //eat next
+        if (ThrownCard.number == 7) {
+          this.CheckNext(ThrownCard.number + 3)
+        } else {
+          this.CheckNext(ThrownCard.number + 1)
+        }
+
+        //check if BONT
         this.CurrentTable.splice(cardIndex, 1)
         if (this.LastCard.number === ThrownCard.number) {
           console.log('bont')
-          pscore += 1
-          if (ThrownCard.number == 7) {
-            pscore += this.CheckNext(ThrownCard.number + 3, this.CurrentTable)
-          } else {
-            pscore += this.CheckNext(ThrownCard.number + 1, this.CurrentTable)
-          }
-          //check for missa
-          if (this.CurrentTable.length === 0) {
-            pscore += 1
-            console.log('misaa')
-          }
-          //check if normal eating +1
-        } else {
-          pscore += 1
-          if (ThrownCard.number == 7) {
-            pscore += this.CheckNext(ThrownCard.number + 3, this.CurrentTable)
-          } else {
-            pscore += this.CheckNext(ThrownCard.number + 1, this.CurrentTable)
-          }
-          //check for missa
-          if (this.CurrentTable.length === 0) {
-            pscore += 1
-            console.log('misaa')
-          }
+          this.CurrentScore.filter(score => {
+            if (score.p === this.LastThrower)
+              score.bont += 1
+          })
         }
+
+        //check for missa
+        if (this.CurrentTable.length === 0) {
+          this.CurrentScore.filter(score => {
+            if (score.p === this.LastThrower)
+              score.bont += 1
+          })
+        }
+
+        //INCREASE SCORE WHEN THROW FINISHED
 
       } else {
         console.log('throw')
@@ -153,58 +166,57 @@ class Table {
       this.CurrentTable.push(ThrownCard)
       this.LastCard = ThrownCard;
     }
-    //INCREASE SCORE WHEN ROUND FINISHED
-    this.CurrentScore.forEach(score => {
-      if (score.p === this.LastThrower) {
-        score.score += pscore
-      }
-    })
-    //PASS TURN
-    this.Turn += 1
-    if (this.Turn >= this.maxPlayers)
-      this.Turn = 0
-    pscore = 0
 
-
-    this.CurrentPlayers.forEach(player => {
+    this.CurrentPlayers.forEach((player, index) => {
       //rmove throwen card from last thrower
+
       if (player.PlayerID == this.LastThrower) {
-        player.removeCard = ThrownCard
+
+        player.removeCard(ThrownCard)
+
       }
       //check if all players run out of cards
       if (this.CurrentPlayers.every(player => player.shouldDistribute() === true)) {
         this.shouldDistribute = true
+        console.log('deck size : ' + this.deck.length)
+        console.log('ROUND FINISHED ' + this.Round)
+        this.Round += 1
+
       }
+
+
       //CHECK IF THE GAME SHOULD REDISTRIBUTE CARDS 
       if (this.shouldDistribute) {
         //CHECK IF SliceEND REACHED LAST ELEMENT WHICH MEANS THERE IS NO MORE CARDS TO DISTRIBUTE
-        if (this.SliceEnd >= this.deck.length) {
+        if (this.deck.length === 0) {
           this.Finished = true
-          //REMOVE CARDS FROM TABLE WHEN GAMES FINISHES
+          //ASSIGN SCORE EQUAL TO NUMBER OF CARDS LEFT ON TABLE WHEN GAME FINISHES
+          this.CurrentScore.forEach(score => {
+            if (score.p == this.LastEater) {
+              score.score += this.CurrentTable.length - 1
+            }
+          })
 
           //clear table
           this.CurrentTable = []
-          //ASSIGN SCORE EQUAL TO NUMBER OF CARDS LEFT ON TABLE WHEN GAME FINISHES
-          this.CurrentScore.forEach(score => {
-            if (score.p === this.LastEater) {
-              score.score += this.CurrentTable.length
-            }
-          })
-          console.log(this.CurrentScore)
-          console.log('finished')
           return
         }
-        this.CurrentPlayers.forEach(player => {
-          player.setHand = this.deck.slice(this.SliceStart, this.SliceEnd)
-          console.log('try')
-          console.log(this.deck.slice(this.SliceStart, this.SliceEnd))
 
-          this.SliceEnd += 4
-          this.SliceStart += 4
+        //REDISTRIBUTE 
+        this.CurrentPlayers.forEach(player => {
+
+          player.setHand = this.deck.slice(this.SliceStart, this.SliceEnd)
+          this.deck.splice(this.SliceStart, this.SliceEnd)
         })
         this.shouldDistribute = false
       }
     })
+
+    //PASS TURN 
+    console.log('DECK SIZE : ' + this.deck.length)
+    this.Turn += 1
+    if (this.Turn >= this.maxPlayers)
+      this.Turn = 0
   }
 }
 
@@ -221,7 +233,7 @@ class Player {
     }
     return false
   }
-  set removeCard(cardToremove) {
+  removeCard(cardToremove) {
     this.PlayerHand.forEach((mycard, index) => {
 
       if (JSON.stringify(mycard) === JSON.stringify(cardToremove)) {
