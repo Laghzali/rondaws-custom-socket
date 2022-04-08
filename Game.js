@@ -73,38 +73,36 @@ class Table {
     this.LastThrower = ID;
   }
 
-  CheckNext(card) {
+  CheckNext(throwncard) {
+    let score = 0
+    if (!this.CurrentTable.some(card => card.number === throwncard))
+      return score
+    //find index of the card
+    console.log('found  : ' + throwncard)
+    let index = this.CurrentTable.findIndex(card => card.number === throwncard)
 
-    this.CurrentTable.forEach((cardInTable, index) => {
-      if (card == cardInTable.number) {
-        console.log('found' + card)
-
-        this.CurrentScore.filter(score => {
-          if (score.p === this.LastThrower)
-            score.score += 1
-        })
-
-        this.CurrentTable.splice(index, 1)
-
-        if (cardInTable.number == 7) {
-          this.CheckNext(card + 3)
-        } else {
-          this.CheckNext(card + 1)
-        }
-      }
+    //remove it from table 
+    this.CurrentTable.splice(index, 1)
+    //assign score
+    this.CurrentScore.forEach(player => {
+      if (player.p == this.LastThrower)
+        player.score += 1
     })
+    //check for the next card
+    if (throwncard == 7)
+      this.CheckNext(throwncard + 3)
+    this.CheckNext(throwncard + 1)
+
+
   }
 
   //Throw card to the table
   set Throw(ThrownCard) {
     this.Thrownum += 1
-    console.log('THROW NO : ' + this.Thrownum)
-
-    if (this.Turn != this.LastThrower) {
-      console.log('not your turn')
-      console.log('Player : ' + this.Turn + 'TURN')
+    //check if its thrower's turn
+    if (this.Turn != this.LastThrower)
       return
-    }
+
 
     ////CHECK IF CurrentTable.card.number is equal to throwencard.number (check if makla)
     ////CHECK IF there is pottentiol multi eat (loop through currenttable and check if nextCard is eatable )
@@ -112,7 +110,7 @@ class Table {
       let cardExist = false
       let cardIndex
       this.CurrentTable.forEach((card, index) => {
-        if (card.number === ThrownCard.number) {
+        if (card.number == ThrownCard.number) {
           cardExist = true;
           cardIndex = index;
         }
@@ -121,34 +119,26 @@ class Table {
         //SET THIS PLAYER AS THE LAST EATER
         this.LastEater = this.LastThrower
 
-        this.CurrentScore.filter(score => {
-          if (score.p === this.LastThrower) {
-            console.log('addinf inw')
-            score.score += 2
-          }
-        })
-
         //eat next
-        if (ThrownCard.number == 7) {
-          this.CheckNext(ThrownCard.number + 3)
-        } else {
-          this.CheckNext(ThrownCard.number + 1)
-        }
+        this.CurrentScore.forEach(player => {
+          if (player.p == this.LastThrower)
+            player.score += 1
+        })
+        this.CheckNext(ThrownCard.number)
 
         //check if BONT
-        this.CurrentTable.splice(cardIndex, 1)
-        if (this.LastCard.number === ThrownCard.number) {
+        if (this.LastCard.number == ThrownCard.number) {
           console.log('bont')
           this.CurrentScore.filter(score => {
-            if (score.p === this.LastThrower)
+            if (score.p == this.LastThrower)
               score.bont += 1
           })
         }
 
         //check for missa
-        if (this.CurrentTable.length === 0) {
+        if (this.CurrentTable.length == 0) {
           this.CurrentScore.filter(score => {
-            if (score.p === this.LastThrower)
+            if (score.p == this.LastThrower)
               score.bont += 1
           })
         }
@@ -193,11 +183,13 @@ class Table {
           //ASSIGN SCORE EQUAL TO NUMBER OF CARDS LEFT ON TABLE WHEN GAME FINISHES
           this.CurrentScore.forEach(score => {
             if (score.p == this.LastEater) {
-              score.score += this.CurrentTable.length - 1
+              score.score += this.CurrentTable.length
             }
           })
 
           //clear table
+          console.log('tab length : ' + this.CurrentTable.length)
+          console.log('debug score: ' + this.debugscore)
           this.CurrentTable = []
           return
         }
