@@ -20,6 +20,30 @@ class Table {
     this.maxPlayers = Players;
   }
 
+
+  generatePlayers() {
+    for (var x = 0; x < this.maxPlayers; x++) {
+      this.CurrentScore.push({ p: x, score: 0, bont: 0, hbel: 0, push: false })
+      let player = new Player(x)
+      this.CurrentPlayers.push(player)
+      player.setHand = this.deck.slice(this.SliceStart, this.SliceEnd)
+      this.deck.splice(this.SliceStart, this.SliceEnd)
+    }
+  }
+  //Construct the deck with 40 cards with different types
+  generateDeck() {
+    const CTypes = ['A', 'B', 'C', 'D']
+    const CNumbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12]
+    let deck = []
+    CNumbers.forEach((NUM) => {
+      CTypes.flatMap(TYPE => {
+
+        deck.push({ number: NUM, type: TYPE })
+      })
+    })
+    return deck
+  }
+
   //initilize table and assing cards to players , construct the deck and distrubite cards
   init() {
     console.log('initiating game')
@@ -33,29 +57,15 @@ class Table {
         array[j] = temp;
       }
     }
-    //Construct the deck with 40 cards with different types
-    const CTypes = ['A', 'B', 'C', 'D']
-    const CNumbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12]
 
-    CNumbers.forEach((NUM) => {
-      CTypes.flatMap(TYPE => {
 
-        this.deck.push({ number: NUM, type: TYPE })
-      })
-    })
-    //shuffle deck (deck[] array)
+
+    //generate and shuffle deck (deck[] array)
+    this.deck = this.generateDeck()
     shuffle(this.deck)
 
-    //Create players on table and distriute 3 cards to each player
-
-    for (var x = 0; x < this.maxPlayers; x++) {
-      this.CurrentScore.push({ p: x, score: 0, bont: 0 })
-      let player = new Player(x)
-      this.CurrentPlayers.push(player)
-      player.setHand = this.deck.slice(this.SliceStart, this.SliceEnd)
-      this.deck.splice(this.SliceStart, this.SliceEnd)
-    }
-
+    //Create players on table and distriute 4 cards to each player
+    this.generatePlayers()
   }
 
 
@@ -72,11 +82,30 @@ class Table {
 
     this.LastThrower = ID;
   }
+  score() {
+    this.CurrentScore.filter(score => {
+      if (score.p == this.LastThrower) {
+
+        if (score.bont < 4) {
+          score.bont += 1
+        } else {
+          if (score.hbel < 4) {
+            score.hbel += 1
+            score.bont = 0
+          } else {
+            score.push += 1
+            score.hbel = 0
+          }
+        }
+      }
+
+    })
+
+  }
 
   CheckNext(throwncard) {
-    let score = 0
     if (!this.CurrentTable.some(card => card.number === throwncard))
-      return score
+      return
     //find index of the card
     console.log('found  : ' + throwncard)
     let index = this.CurrentTable.findIndex(card => card.number === throwncard)
@@ -118,32 +147,23 @@ class Table {
       if (cardExist) {
         //SET THIS PLAYER AS THE LAST EATER
         this.LastEater = this.LastThrower
+        //check if BONT
+        if (this.LastCard.number == ThrownCard.number)
+          this.score()
 
-        //eat next
         this.CurrentScore.forEach(player => {
           if (player.p == this.LastThrower)
             player.score += 1
         })
-        this.CheckNext(ThrownCard.number)
 
-        //check if BONT
-        if (this.LastCard.number == ThrownCard.number) {
-          console.log('bont')
-          this.CurrentScore.filter(score => {
-            if (score.p == this.LastThrower)
-              score.bont += 1
-          })
-        }
+        this.CheckNext(ThrownCard.number)
 
         //check for missa
         if (this.CurrentTable.length == 0) {
-          this.CurrentScore.filter(score => {
-            if (score.p == this.LastThrower)
-              score.bont += 1
-          })
+          this.score()
         }
 
-        //INCREASE SCORE WHEN THROW FINISHED
+        console.log(this.CurrentScore)
 
       } else {
         console.log('throw')
@@ -170,6 +190,8 @@ class Table {
         this.shouldDistribute = true
         console.log('deck size : ' + this.deck.length)
         console.log('ROUND FINISHED ' + this.Round)
+        console.log('ROUND SCORE : ')
+        console.log(this.CurrentScore)
         this.Round += 1
 
       }
@@ -181,8 +203,10 @@ class Table {
         if (this.deck.length === 0) {
           this.Finished = true
           //ASSIGN SCORE EQUAL TO NUMBER OF CARDS LEFT ON TABLE WHEN GAME FINISHES
+          console.log('finiiiiiished')
           this.CurrentScore.forEach(score => {
             if (score.p == this.LastEater) {
+              console.log('asssssss')
               score.score += this.CurrentTable.length
             }
           })
@@ -190,6 +214,7 @@ class Table {
           //clear table
           console.log('tab length : ' + this.CurrentTable.length)
           console.log('debug score: ' + this.debugscore)
+          console.log(this.CurrentScore)
           this.CurrentTable = []
           return
         }

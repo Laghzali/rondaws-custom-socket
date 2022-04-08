@@ -22,34 +22,43 @@ const io = require('socket.io')(http, {
 io.on('connection', (socket) => {
     let room = generate_token(4)
     console.log('Connected')
+    let clientName
+    socket.on('SAVE_MY_NAME_KURWA', name => {
+        clientName = name
+    })
     //join client to rooom
     socket.join(room)
     //return room id to client
     io.in(room).emit('room', { id: room })
     //update players
     io.to(room).emit('UPDATE_PLAYERS', 1)
-    OnlineSessions.push({ id: room, players: [socket.id], admin: socket.id })
+    let _players = new Map()
+    _players.set(socket.id, 0)
+    OnlineSessions.push({ id: room, players: _players, admin: socket.id })
+
 
     //listen for room joins
-    socket.on('JOIN_ROOM', room => {
+    socket.on('JOIN_ROOM', data => {
 
-        if (!socket.rooms.has(room)) {
+        if (!socket.rooms.has(data.room)) {
             var rooms = io.sockets.adapter.sids[socket.id]; for (var room in rooms) { socket.leave(room); }
             //join the wanted room
-            socket.join(room)
+            socket.join(data.room)
             //room lentgth?
             let roomLength = 0
+            console.log(data)
             ///stupid way to return players length
             OnlineSessions.forEach(session => {
-                if (room == session.id) {
-                    session.players.push(socket.id)
-                    roomLength = session.players.length
+                if (data.room == session.id) {
+                    session.players.set(socket.id, data.pname)
+                    roomLength = session.players.size
                     console.log('len : ' + roomLength)
+                    console.log(session)
                 }
             })
             //update room players list
-            io.to(room).emit('UPDATE_PLAYERS', roomLength)
-            io.to(socket.id).emit(room, true)
+            io.to(data.room).emit('UPDATE_PLAYERS', roomLength)
+            io.to(socket.id).emit(data.room, true)
         }
     })
 
@@ -67,12 +76,22 @@ io.on('connection', (socket) => {
                 const CurrrentTurn = game.Turn
                 game.init()
                 //msg.id is room id
+
                 const clients = Array.from(io.sockets.adapter.rooms.get(msg.id))
+                const players = []
+
                 for (let x = 0; x < clients.length; x++) {
                     console.log(CurrentPlayers[x].PlayerID)
                     io.to(clients[x]).emit('GAME_RECEIVE_HAND', CurrentPlayers[x])
                     io.to(clients[x]).emit('PLAYER_ID', CurrentPlayers[x].PlayerID)
+                    OnlineSessions.forEach(session => {
+                        if (session.id == msg.id) {
+                            players.push({ cid: CurrentPlayers[x].PlayerID, cname: session.players.get(clients[x]) })
+                        }
+                    })
+
                 }
+                io.in(msg.id).emit('CURRENT_PLAYERS', players)
                 io.in(msg.id).emit('GAME_CURRENT_TABLE', CurrentTable)
                 io.in(msg.id).emit('GAME_RECEIVE_SCORE', CurrentScore)
                 io.in(msg.id).emit('PLAYER_TURN', CurrrentTurn)
