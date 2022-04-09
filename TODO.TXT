@@ -1,0 +1,14 @@
+
+HANDLE >>>>
+
+
+C: \Users\CHRAJEM\Desktop\Projects\rondaws\app.js: 49
+mySession.players.push(socket.id)
+    ^
+
+    TypeError: Cannot read properties of undefined(reading 'players')
+    at Socket.< anonymous > (C: \Users\CHRAJEM\Desktop\Projects\rondaws\app.js: 49: 23)
+    at Socket.emit(node: events: 526: 28)
+    at Socket.emitUntyped(C: \Users\CHRAJEM\Desktop\Projects\rondaws\node_modules\socket.io\dist\typed - events.js: 69: 22)        
+    at C: \Users\CHRAJEM\Desktop\Projects\rondaws\node_modules\socket.io\dist\socket.js: 466: 39
+    at processTicksAndRejections(node: internal / process / task_queues: 78: 11)

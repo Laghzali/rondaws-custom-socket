@@ -3,10 +3,11 @@ const http = require('http').createServer();
 const Ronda = require('./Game').Ronda
 const OnlineGames = []
 const OnlineSessions = []
+let onlineClients = new Map()
 
 function generate_token(length) {
     //edit the token allowed characters
-    var a = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".split("");
+    var a = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ1234567890".split("");
     var b = [];
     for (var i = 0; i < length; i++) {
         var j = (Math.random() * (a.length - 1)).toFixed(0);
@@ -21,10 +22,11 @@ const io = require('socket.io')(http, {
 
 io.on('connection', (socket) => {
     let room = generate_token(4)
+
     console.log('Connected')
-    let clientName
     socket.on('SAVE_MY_NAME_KURWA', name => {
-        clientName = name
+        onlineClients.set(socket.id, name)
+        console.log(onlineClients)
     })
     //join client to rooom
     socket.join(room)
@@ -32,9 +34,7 @@ io.on('connection', (socket) => {
     io.in(room).emit('room', { id: room })
     //update players
     io.to(room).emit('UPDATE_PLAYERS', 1)
-    let _players = new Map()
-    _players.set(socket.id, 0)
-    OnlineSessions.push({ id: room, players: _players, admin: socket.id })
+    OnlineSessions.push({ id: room, players: [socket.id], admin: socket.id })
 
 
     //listen for room joins
@@ -44,18 +44,12 @@ io.on('connection', (socket) => {
             var rooms = io.sockets.adapter.sids[socket.id]; for (var room in rooms) { socket.leave(room); }
             //join the wanted room
             socket.join(data.room)
+
+            let mySession = OnlineSessions.filter(session => session.id === data.room)[0]
+            mySession.players.push(socket.id)
             //room lentgth?
-            let roomLength = 0
-            console.log(data)
-            ///stupid way to return players length
-            OnlineSessions.forEach(session => {
-                if (data.room == session.id) {
-                    session.players.set(socket.id, data.pname)
-                    roomLength = session.players.size
-                    console.log('len : ' + roomLength)
-                    console.log(session)
-                }
-            })
+            let roomLength = mySession.players.length
+            console.log('length : ', mySession.players.length)
             //update room players list
             io.to(data.room).emit('UPDATE_PLAYERS', roomLength)
             io.to(socket.id).emit(data.room, true)
@@ -79,18 +73,13 @@ io.on('connection', (socket) => {
 
                 const clients = Array.from(io.sockets.adapter.rooms.get(msg.id))
                 const players = []
-
                 for (let x = 0; x < clients.length; x++) {
-                    console.log(CurrentPlayers[x].PlayerID)
                     io.to(clients[x]).emit('GAME_RECEIVE_HAND', CurrentPlayers[x])
                     io.to(clients[x]).emit('PLAYER_ID', CurrentPlayers[x].PlayerID)
-                    OnlineSessions.forEach(session => {
-                        if (session.id == msg.id) {
-                            players.push({ cid: CurrentPlayers[x].PlayerID, cname: session.players.get(clients[x]) })
-                        }
-                    })
 
+                    players.push({ cid: CurrentPlayers[x].PlayerID, cname: onlineClients.get(clients[x]) })
                 }
+                console.log(players)
                 io.in(msg.id).emit('CURRENT_PLAYERS', players)
                 io.in(msg.id).emit('GAME_CURRENT_TABLE', CurrentTable)
                 io.in(msg.id).emit('GAME_RECEIVE_SCORE', CurrentScore)
@@ -119,10 +108,7 @@ io.on('connection', (socket) => {
                     return
                 }//data.pid is player id (thrower)
                 game.game.Thrower = data.pid
-
                 game.game.Throw = { number: data.number, type: data.type }
-
-
                 const clients = Array.from(io.sockets.adapter.rooms.get(data.room))
                 for (let x = 0; x < clients.length; x++) {
                     console.log('playerrrss ')
