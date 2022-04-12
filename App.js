@@ -111,6 +111,7 @@ io.on('connection', (socket) => {
                 }
                 io.in(data.room).emit('GAME_RECEIVE_ROUND', game.game.Round)
                 io.in(data.room).emit('GAME_RECEIVE_SCORE', game.game.CurrentScore)
+                io.in(data.room).emit('GAME_RECEIVE_TEAMSCORE', game.game.teamScore)
                 io.in(data.room).emit('GAME_CURRENT_TABLE', game.game.CurrentTable)
                 io.in(data.room).emit('PLAYER_TURN', game.game.Turn)
 
