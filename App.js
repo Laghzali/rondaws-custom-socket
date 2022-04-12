@@ -7,7 +7,7 @@ let onlineClients = new Map()
 
 function generate_token(length) {
     //edit the token allowed characters
-    var a = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ1234567890".split("");
+    var a = "ABCDEFGHJKLMNOPQRSTUVWXYZ".split("");
     var b = [];
     for (var i = 0; i < length; i++) {
         var j = (Math.random() * (a.length - 1)).toFixed(0);
@@ -23,7 +23,6 @@ const io = require('socket.io')(http, {
 io.on('connection', (socket) => {
     let room = generate_token(4)
 
-    console.log('Connected')
     socket.on('SAVE_MY_NAME_KURWA', name => {
         onlineClients.set(socket.id, name)
         console.log(onlineClients)
@@ -39,9 +38,10 @@ io.on('connection', (socket) => {
 
     //listen for room joins
     socket.on('JOIN_ROOM', data => {
+        //leave all rooms
+        var rooms = io.sockets.adapter.sids[socket.id]; for (var room in rooms) { socket.leave(room); }
 
         if (!socket.rooms.has(data.room)) {
-            var rooms = io.sockets.adapter.sids[socket.id]; for (var room in rooms) { socket.leave(room); }
             //join the wanted room
             socket.join(data.room)
 
@@ -49,7 +49,6 @@ io.on('connection', (socket) => {
             mySession.players.push(socket.id)
             //room lentgth?
             let roomLength = mySession.players.length
-            console.log('length : ', mySession.players.length)
             //update room players list
             io.to(data.room).emit('UPDATE_PLAYERS', roomLength)
             io.to(socket.id).emit(data.room, true)
@@ -57,10 +56,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('GAME_INIT', msg => {
-        console.log('msg : ')
-        console.log(msg)
         if (msg.status == 'start') {
-            console.log('players : ' + msg.maxplayers)
             if (msg.maxplayers > 1) {
                 const game = new Ronda(msg.maxplayers)
                 const CurrentTable = game.CurrentTable;
@@ -92,8 +88,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('GAME_THROW', data => {
-        console.log('throoow')
-        console.log(data)
+
         OnlineGames.forEach(game => {
             //game.id is the game room id
             if (game.id == data.room) {
@@ -104,17 +99,17 @@ io.on('connection', (socket) => {
                     return
                 if (game.game.Finished) {
                     console.log('GAME FINISHED')
-                    io.in(data.room).emit('GAME_FINISHED', game.Round)
+                    io.in(data.room).emit('GAME_FINISHED', true)
                     return
                 }//data.pid is player id (thrower)
                 game.game.Thrower = data.pid
                 game.game.Throw = { number: data.number, type: data.type }
                 const clients = Array.from(io.sockets.adapter.rooms.get(data.room))
                 for (let x = 0; x < clients.length; x++) {
-                    console.log('playerrrss ')
                     io.to(clients[x]).emit('GAME_RECEIVE_HAND', game.game.CurrentPlayers[x])
                     console.log(game.game.CurrentPlayers[x])
                 }
+                io.in(data.room).emit('GAME_RECEIVE_ROUND', game.game.Round)
                 io.in(data.room).emit('GAME_RECEIVE_SCORE', game.game.CurrentScore)
                 io.in(data.room).emit('GAME_CURRENT_TABLE', game.game.CurrentTable)
                 io.in(data.room).emit('PLAYER_TURN', game.game.Turn)
