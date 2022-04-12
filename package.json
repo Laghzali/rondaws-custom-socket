@@ -4,5 +4,8 @@
     "socket.io": "^4.4.1",
     "ws": "^8.5.0"
   },
-  "main": "App.js"
+  "main": "App.js",
+  "scripts": {
+    "start": "node App.js"
+  }
 }
