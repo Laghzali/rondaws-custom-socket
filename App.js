@@ -46,9 +46,8 @@ io.on('connection', (socket) => {
             socket.join(data.room)
             OnlineSessions.forEach(session => {
                 if (session.id === data.room)
-                    mySession.players.push(socket.id)
+                    session.players.push(socket.id)
             })
-
 
             //room lentgth?
             let roomLength = mySession.players.length
