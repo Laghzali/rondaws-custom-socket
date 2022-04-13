@@ -45,8 +45,14 @@ io.on('connection', (socket) => {
             //join the wanted room
             socket.join(data.room)
 
-            let mySession = OnlineSessions.filter(session => session.id === data.room)[0]
-            mySession.players.push(socket.id)
+            let mySession = OnlineSessions.find(session => session.id === data.room)[0]
+            try {
+                mySession.players.push(socket.id)
+            } catch (e) {
+                console.log(e)
+
+            }
+
             //room lentgth?
             let roomLength = mySession.players.length
             //update room players list
@@ -120,4 +126,4 @@ io.on('connection', (socket) => {
     })
 });
 
-http.listen(process.env.PORT, () => console.log('listening on http://localhost:3000'));
+http.listen(process.env.PORT || 3000, () => console.log('listening on http://localhost:3000'));
