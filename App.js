@@ -40,17 +40,20 @@ io.on('connection', (socket) => {
     socket.on('JOIN_ROOM', data => {
         //leave all rooms
         var rooms = io.sockets.adapter.sids[socket.id]; for (var room in rooms) { socket.leave(room); }
-
+        let roomLength
         if (!socket.rooms.has(data.room)) {
             //join the wanted room
             socket.join(data.room)
             OnlineSessions.forEach(session => {
-                if (session.id === data.room)
+                if (session.id === data.room) {
                     session.players.push(socket.id)
+                    //room lentgth?
+                    roomLength = session.players.length
+                }
             })
 
-            //room lentgth?
-            let roomLength = mySession.players.length
+
+
             //update room players list
             io.to(data.room).emit('UPDATE_PLAYERS', roomLength)
             io.to(socket.id).emit(data.room, true)
