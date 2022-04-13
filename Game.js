@@ -40,6 +40,8 @@ class Table {
     if (this.maxPlayers > 3)
       this.gameOfFour = true
     let team = 1
+    if (this.maxPlayers == 3)
+      return
     for (var x = 0; x < this.maxPlayers; x++) {
       this.CurrentScore.push({ p: x, score: 0, bont: 0, hbel: 0, push: 0 })
 
