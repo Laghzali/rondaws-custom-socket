@@ -54,7 +54,7 @@ class Table {
       score: 0,
       hbel: 0,
       bont: 0,
-      push: 0
+      push: 2
     })
     this.teamScore.push({
       team: 2,
@@ -324,6 +324,16 @@ class Table {
         let kbir = this.CurrentScore.some(score => {
           return score.push == 2
         })
+
+        let teamkbir = this.teamScore.some(score => {
+          return score.push == 2
+        })
+        if (teamkbir) {
+          this.shouldDistribute = false
+          this.Finished = true
+          console.log('GAME FINISHED')
+          return
+        }
 
         if (!kbir) {
           this.deck = this.generateDeck()

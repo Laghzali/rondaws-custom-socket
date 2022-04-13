@@ -84,6 +84,7 @@ io.on('connection', (socket) => {
                 io.in(msg.id).emit('CURRENT_PLAYERS', players)
                 io.in(msg.id).emit('GAME_CURRENT_TABLE', CurrentTable)
                 io.in(msg.id).emit('GAME_RECEIVE_SCORE', CurrentScore)
+                io.in(msg.id).emit('GAME_RECEIVE_TEAMSCORE', game.teamScore)
                 io.in(msg.id).emit('PLAYER_TURN', CurrrentTurn)
                 io.in(msg.id).emit('GAME_START', true)
                 OnlineGames.push({ id: msg.id, game: game })
