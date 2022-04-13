@@ -48,22 +48,22 @@ class Table {
       player.setHand = this.deck.slice(this.SliceStart, this.SliceEnd)
       this.deck.splice(this.SliceStart, this.SliceEnd)
     }
-    if (this.maxPlayers > 3) {
-      this.teamScore.push({
-        team: 1,
-        score: 0,
-        hbel: 0,
-        bont: 0,
-        push: 0
-      })
-      this.teamScore.push({
-        team: 2,
-        score: 0,
-        hbel: 0,
-        bont: 0,
-        push: 0
-      })
-    }
+
+    this.teamScore.push({
+      team: 1,
+      score: 0,
+      hbel: 0,
+      bont: 0,
+      push: 0
+    })
+    this.teamScore.push({
+      team: 2,
+      score: 0,
+      hbel: 0,
+      bont: 0,
+      push: 0
+    })
+
 
   }
   //Construct the deck with 40 cards with different types
