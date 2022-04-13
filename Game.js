@@ -302,10 +302,10 @@ class Table {
           }
         })
 
-        if (teamscore1 > 20) {
+        if (teamscore1 > 20 && this.gameOfFour) {
           this.score(teamscore1 - 20, 0)
         }
-        if (teamscore2 > 20) {
+        if (teamscore2 > 20 && this.gameOfFour) {
           this.score(teamscore2 - 20, 1)
         }
 

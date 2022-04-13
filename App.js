@@ -52,8 +52,6 @@ io.on('connection', (socket) => {
                 }
             })
 
-
-
             //update room players list
             io.to(data.room).emit('UPDATE_PLAYERS', roomLength)
             io.to(socket.id).emit(data.room, true)
@@ -105,6 +103,7 @@ io.on('connection', (socket) => {
                     return
                 if (game.game.Finished) {
                     console.log('GAME FINISHED')
+                    OnlineGames.splice(OnlineGames.indexOf(game), 1)
                     io.in(data.room).emit('GAME_FINISHED', true)
                     return
                 }//data.pid is player id (thrower)
