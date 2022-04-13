@@ -44,14 +44,11 @@ io.on('connection', (socket) => {
         if (!socket.rooms.has(data.room)) {
             //join the wanted room
             socket.join(data.room)
+            OnlineSessions.forEach(session => {
+                if (session.id === data.room)
+                    mySession.players.push(socket.id)
+            })
 
-            let mySession = OnlineSessions.find(session => session.id === data.room)[0]
-            try {
-                mySession.players.push(socket.id)
-            } catch (e) {
-                console.log(e)
-
-            }
 
             //room lentgth?
             let roomLength = mySession.players.length
