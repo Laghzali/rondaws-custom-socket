@@ -175,6 +175,7 @@ class Table {
         } else {
           this.teamScore[0].push += 1
           this.teamScore[0].hbel = 0
+          this.teamScore[0].bont = 0
         }
       }
 
@@ -187,6 +188,7 @@ class Table {
           this.teamScore[1].bont = 0
         } else {
           this.teamScore[1].push += 1
+          this.teamScore[1].hbel = 0
           this.teamScore[1].hbel = 0
         }
       }
@@ -204,6 +206,7 @@ class Table {
             score.bont = 0
           } else {
             score.push += 1
+            score.bont = 0
             score.hbel = 0
           }
         }
