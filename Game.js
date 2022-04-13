@@ -56,7 +56,7 @@ class Table {
       score: 0,
       hbel: 0,
       bont: 0,
-      push: 2
+      push: 0
     })
     this.teamScore.push({
       team: 2,
